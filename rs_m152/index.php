@@ -5,6 +5,10 @@
     VERSION : 25.01.2021 v1.0
 -->
 
+<?php
+include("php/post.php");
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,7 +38,7 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a href="#" class="navbar-brand logo">b</a>
+                            <a href="index.php" class="navbar-brand logo">β</img></a>
                         </div>
                         <nav class="collapse navbar-collapse" role="navigation">
                             <form class="navbar-form navbar-left">
@@ -47,13 +51,10 @@
                             </form>
                             <ul class="nav navbar-nav">
                                 <li>
-                                    <a href="#"><i class="bi bi-house"></i> Home</a>
+                                    <a href="index.php"><i class="bi bi-house"></i> Home</a>
                                 </li>
                                 <li>
-                                    <a href="#" role="button" data-toggle="modal"><i class="bi bi-plus"></i></i> Post</a>
-                                </li>
-                                <li>
-                                    <a href="#"><span class="badge">badge</span></a>
+                                    <a href="php/post.php" role="button" data-toggle="modal"><i class="bi bi-plus"></i></i> Post</a>
                                 </li>
                             </ul>
                         </nav>
@@ -73,14 +74,14 @@
                                         </div>
                                     </div>
                                     <div class="panel panel-default">
-                                        <div class="panel-heading"><a href="#" class="pull-right">View all</a>
+                                        <div class="panel-heading"><a href="" class="pull-right">View all</a>
                                             <h4>Bootstrap Examples</h4>
                                         </div>
                                         <div class="panel-body">
                                             <div class="list-group">
-                                                <a href="#" class="list-group-item">Modal / Dialog</a>
-                                                <a href="#" class="list-group-item">Datetime Examples</a>
-                                                <a href="#" class="list-group-item">Data Grids</a>
+                                                <a href="" class="list-group-item">Modal / Dialog</a>
+                                                <a href="" class="list-group-item">Datetime Examples</a>
+                                                <a href="" class="list-group-item">Data Grids</a>
                                             </div>
                                         </div>
                                     </div>
@@ -92,27 +93,27 @@
                                             </div>
                                             <button class="btn btn-primary pull-right" type="button">Post</button>
                                             <ul class="list-inline">
-                                                <li><a href="#"><i class="bi bi-upload"></i></a></li>
-                                                <li><a href="#"><i class="bi bi-camera"></i></a></li>
-                                                <li><a href="#"><i class="bi bi-geo-alt"></i></a></li>
+                                                <li><a href=""><i class="bi bi-upload"></i></a></li>
+                                                <li><a href=""><i class="bi bi-camera"></i></a></li>
+                                                <li><a href=""><i class="bi bi-geo-alt"></i></a></li>
                                             </ul>
                                         </form>
                                     </div>
                                     <div class="panel panel-default">
-                                        <div class="panel-heading"><a href="#" class="pull-right">View all</a>
+                                        <div class="panel-heading"><a href="" class="pull-right">View all</a>
                                             <h4>More Templates</h4>
                                         </div>
                                         <div class="panel-body">
-                                            <img src="img/150x150.gif" class="img-circle pull-right"> <a href="#">Free @Bootply</a>
+                                            <img src="img/150x150.gif" class="img-circle pull-right"> <a href="">Free @Bootply</a>
                                             <div class="clearfix"></div>
                                             There a load of new free Bootstrap 3
                                             ready templates at Bootply. All of these templates are free and don't
                                             require extensive customization to the Bootstrap baseline.
                                             <hr>
                                             <ul class="list-unstyled">
-                                                <li><a href="#">Dashboard</a></li>
-                                                <li><a href="#">Darkside</a></li>
-                                                <li><a href="#">Greenfield</a></li>
+                                                <li><a href="">Dashboard</a></li>
+                                                <li><a href="">Darkside</a></li>
+                                                <li><a href="">Greenfield</a></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -141,11 +142,11 @@
                                         </form>
                                     </div>
                                     <div class="panel panel-default">
-                                        <div class="panel-heading"><a href="#" class="pull-right">View all</a>
+                                        <div class="panel-heading"><a href="" class="pull-right">View all</a>
                                             <h4>Bootply Editor &amp; Code Library</h4>
                                         </div>
                                         <div class="panel-body">
-                                            <p><img src="img/150x150.gif" class="img-circle pull-right"> <a href="#">The Bootstrap Playground</a></p>
+                                            <p><img src="img/150x150.gif" class="img-circle pull-right"> <a href="">The Bootstrap Playground</a></p>
                                             <div class="clearfix"></div>
                                             <hr>
                                             Design, build, test, and prototype
@@ -156,14 +157,14 @@
                                         </div>
                                     </div>
                                     <div class="panel panel-default">
-                                        <div class="panel-heading"><a href="#" class="pull-right">View all</a>
+                                        <div class="panel-heading"><a href="" class="pull-right">View all</a>
                                             <h4>Stackoverflow</h4>
                                         </div>
                                         <div class="panel-body">
-                                            <img src="img/150x150.gif" class="img-circle pull-right"> <a href="#">Keyword: Bootstrap</a>
+                                            <img src="img/150x150.gif" class="img-circle pull-right"> <a href="">Keyword: Bootstrap</a>
                                             <div class="clearfix"></div>
                                             <hr>
-                                            <p>If you're looking for help with Bootstrap code, the <code>twitter-bootstrap</code> tag at <a href="#">Stackoverflow</a> is a good place to find answers.</p>
+                                            <p>If you're looking for help with Bootstrap code, the <code>twitter-bootstrap</code> tag at <a href="">Stackoverflow</a> is a good place to find answers.</p>
                                             <hr>
                                             <form>
                                                 <div class="input-group">
@@ -177,7 +178,7 @@
                                         </div>
                                     </div>
                                     <div class="panel panel-default">
-                                        <div class="panel-heading"><a href="#" class="pull-right">View all</a>
+                                        <div class="panel-heading"><a href="" class="pull-right">View all</a>
                                             <h4>Portlet Heading</h4>
                                         </div>
                                         <div class="panel-body">
@@ -226,9 +227,9 @@
                     <div>
                         <button class="btn btn-primary btn-sm" data-dismiss="modal" aria-hidden="true">Post</button>
                         <ul class="pull-left list-inline">
-                            <li><a href="#"><i class="bi bi-upload"></i></a></li>
-                            <li><a href="#"><i class="bi bi-camera"></i></a></li>
-                            <li><a href="#"><i class="bi bi-geo-alt"></i></a></li>
+                            <li><a href=""><i class="bi bi-upload"></i></a></li>
+                            <li><a href=""><i class="bi bi-camera"></i></a></li>
+                            <li><a href=""><i class="bi bi-geo-alt"></i></a></li>
                         </ul>
                     </div>
                 </div>
