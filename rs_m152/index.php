@@ -66,10 +66,10 @@ include("php/post.php");
                                     <div class="panel panel-default">
                                         <div class="panel-thumbnail"><img src="img/bg_5.jpg" class="img-responsive"></div>
                                         <div class="panel-body">
-                                            <p class="lead">NOM Prenom</p>
+                                            <p class="lead">Nom blog</p>
                                             <p>45 Followers, 13 Posts</p>
                                             <p>
-                                                <img src="img/150x150.jpg" height="28px" width="28px"> Bienvenu :email:
+                                                <img src="img/150x150.jpg" height="28px" width="28px">
                                             </p>
                                         </div>
                                     </div>
@@ -134,11 +134,7 @@ include("php/post.php");
 
                                     <div class="well">
                                         <form class="form">
-                                            <h4>Sign-up</h4>
-                                            <div class="input-group text-center">
-                                                <input class="form-control input-lg" placeholder="Enter your email address" type="text">
-                                                <span class="input-group-btn"><button class="btn btn-lg btn-primary" type="button">OK</button></span>
-                                            </div>
+                                            <b>BIENVENU</b>
                                         </form>
                                     </div>
                                     <div class="panel panel-default">
