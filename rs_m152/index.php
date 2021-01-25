@@ -66,10 +66,10 @@ include("php/post.php");
                                     <div class="panel panel-default">
                                         <div class="panel-thumbnail"><img src="img/bg_5.jpg" class="img-responsive"></div>
                                         <div class="panel-body">
-                                            <p class="lead">Urbanization</p>
+                                            <p class="lead">NOM Prenom</p>
                                             <p>45 Followers, 13 Posts</p>
                                             <p>
-                                                <img src="img/uFp_tsTJboUY7kue5XAsGAs28.png" height="28px" width="28px">
+                                                <img src="img/150x150.jpg" height="28px" width="28px"> Bienvenu :email:
                                             </p>
                                         </div>
                                     </div>
@@ -104,7 +104,7 @@ include("php/post.php");
                                             <h4>More Templates</h4>
                                         </div>
                                         <div class="panel-body">
-                                            <img src="img/150x150.gif" class="img-circle pull-right"> <a href="">Free @Bootply</a>
+                                            <img src="img/150x150.jpg" class="img-circle pull-right"> <a href="">Free @Bootply</a>
                                             <div class="clearfix"></div>
                                             There a load of new free Bootstrap 3
                                             ready templates at Bootply. All of these templates are free and don't
@@ -146,7 +146,7 @@ include("php/post.php");
                                             <h4>Bootply Editor &amp; Code Library</h4>
                                         </div>
                                         <div class="panel-body">
-                                            <p><img src="img/150x150.gif" class="img-circle pull-right"> <a href="">The Bootstrap Playground</a></p>
+                                            <p><img src="img/150x150.jpg" class="img-circle pull-right"> <a href="">The Bootstrap Playground</a></p>
                                             <div class="clearfix"></div>
                                             <hr>
                                             Design, build, test, and prototype
@@ -161,7 +161,7 @@ include("php/post.php");
                                             <h4>Stackoverflow</h4>
                                         </div>
                                         <div class="panel-body">
-                                            <img src="img/150x150.gif" class="img-circle pull-right"> <a href="">Keyword: Bootstrap</a>
+                                            <img src="img/150x150.jpg" class="img-circle pull-right"> <a href="">Keyword: Bootstrap</a>
                                             <div class="clearfix"></div>
                                             <hr>
                                             <p>If you're looking for help with Bootstrap code, the <code>twitter-bootstrap</code> tag at <a href="">Stackoverflow</a> is a good place to find answers.</p>
