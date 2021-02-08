@@ -2,10 +2,12 @@
 require_once("config.inc.php");
 
 $btnBlog = filter_input(INPUT_POST, 'btnBlog', FILTER_SANITIZE_STRING);
+$comments = filter_input(INPUT_POST, 'text', FILTER_DEFAULT);
 
 switch ($btnBlog) {
     case 'Publish':
-        publishMedia();
+        sizeFile($comments);
+        header("Location: ../index.php");
         break;
 }
 
@@ -33,8 +35,29 @@ function connectDB()
     return $connectDB;
 }
 
+/// Fonction qui permet de vérifier si la taille des fichiers n'est pas trop volumineuse
+function sizeFile($comment)
+{
+    $totalSize = 0;
+    for ($i = 0; $i < count($_FILES['mediaFile']['size']); $i++) {
+        $sizeFile = $_FILES['mediaFile']['size'][$i];
+        if ($sizeFile < 300000) {
+            echo " ok";
+            $totalSize += $sizeFile;
+        }else{
+            echo "Fichiers trop volumineux";
+            break;
+        }
+    }
+    if ($totalSize < 7000000) {
+        publishMedia($comment);
+        var_dump($totalSize);
+    }
+}
+
 /// Fonction qui permet de publier une image
-function publishMedia()
+/// Note - Restart id : ALTER TABLE `meida` AUTO_INCREMENT = 0;
+function publishMedia($comment)
 {
     for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
         for ($i = 0; $i < count($_FILES['mediaFile']['type']); $i++) {
@@ -43,6 +66,7 @@ function publishMedia()
             databaseInsert($nameFile, $typeFile);
         }
     }
+    publishCom($comment);
 }
 
 /// Fonction qui permet de vérifier si le fichier est dans la base de donnée
@@ -62,5 +86,17 @@ function databaseInsert($nameFile, $typeFile)
         $sql = "INSERT INTO `media` (nomFichierMedia, typeMedia) VALUES (:nameFile, :typeFile)";
         $query = connectDB()->prepare($sql);
         $query->execute([':nameFile' => $nameFile, ':typeFile' => $typeFile]);
+    }
+}
+
+/// Fonction qui permet d'insérer un commentaire et la date à laquel il a été posté
+/// Note - Restart id : ALTER TABLE `post` AUTO_INCREMENT = 0;
+function publishCom($comment)
+{
+    $dateTime = date('Y-m-d H:i:s');
+    if ($comment != null) {
+        $sql = "INSERT INTO `post` (commentaire, datePost) VALUES (:com, :dateP)";
+        $query = connectDB()->prepare($sql);
+        $query->execute([':com' => $comment, ':dateP' => $dateTime]);
     }
 }

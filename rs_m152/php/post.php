@@ -19,7 +19,9 @@ require_once('functions.php');
 </head>
 
 <body>
-    <form method="POST" action="../index.php" enctype="multipart/form-data">
+    <form method="POST" action="" enctype="multipart/form-data">
+    <textarea name="text" rows="5" cols="55" style="resize: none;"></textarea>
+    </br>
         Select a file :
         <input type="file" accept="img/*" name="mediaFile[]" multiple>
         <input type="submit" name="btnBlog" value="Publish">
