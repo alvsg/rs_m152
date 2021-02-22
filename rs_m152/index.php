@@ -6,7 +6,7 @@
 -->
 
 <?php
-include_once('functions.php');
+include_once('php/functions.php');
 ?>
 
 <!DOCTYPE html>
@@ -185,19 +185,14 @@ include_once('functions.php');
                                         </div>
                                     </div>-->
 
-                                    <!-- Post with IMG -->
-                                    <div class="panel panel-default">
+                                    <?php publishPost('img/bg_4.jpg', 'test'); ?>
+                                    <!-- <div class="panel panel-default">
                                         <div class="panel-thumbnail"><img src="img/bg_4.jpg" class="img-responsive"></div>
                                         <div class="panel-body">
                                             <p class="lead">Social Good</p>
                                             <p>1,200 Followers, 83 Posts</p>
-                                            <!--<p>
-                                                <img src="img/photo.jpg" height="28px" width="28px">
-                                                <img src="img/photo.png" height="28px" width="28px">
-                                                <img src="img/photo_002.jpg" height="28px" width="28px">
-                                            </p>-->
                                         </div>
-                                    </div>
+                                    </div> -->
 
                                 </div>
                             </div>

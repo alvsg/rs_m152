@@ -16,15 +16,35 @@ require_once('functions.php');
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>Blog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
 </head>
 
 <body>
     <form method="POST" action="" enctype="multipart/form-data">
-    <textarea name="text" rows="5" cols="55" style="resize: none;"></textarea>
-    </br>
+        <textarea name="text" rows="5" cols="55" style="resize: none;"></textarea>
+        </br>
         Select a file :
-        <input type="file" accept="img/*" name="mediaFile[]" multiple>
-        <input type="submit" name="btnBlog" value="Publish">
+        <input type="file" id="mediaFile" accept="image/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">
+        <div id="infos"></div>
+        <input type="submit" name="btnBlog" value="Upload">
+        <script>
+            function analyseFichiers(fichiers) {
+                if (fichiers) {
+                    var infos = document.getElementById('infos');
+                    var nombreFichiers = fichiers.length;
+                    var tailleTotale = 0;
+                    infos.innerHTML = "<p>Il y a <b>" + nombreFichiers + "</b> fichiers</p>";
+                    infos.innerHTML += "<ul>";
+                    for (i = 0; i < nombreFichiers; i++) {
+                        infos.innerHTML += "<li>" + fichiers[i].name + " (" + fichiers[i].type + ")</li>";
+                        tailleTotale += fichiers[i].size;
+                    }
+                    infos.innerHTML += "</ul>";
+                    infos.innerHTML += "<p>Total : <b>" + Math.round(tailleTotale / 1024) + "</b> Kio </p> ";
+                }
+            }
+        </script>
     </form>
 </body>
 

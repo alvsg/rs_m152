@@ -44,14 +44,13 @@ function sizeFile($comment)
         if ($sizeFile < 300000) {
             echo " ok";
             $totalSize += $sizeFile;
-        }else{
+        } else {
             echo "Fichiers trop volumineux";
             break;
         }
     }
     if ($totalSize < 7000000) {
         publishMedia($comment);
-        var_dump($totalSize);
     }
 }
 
@@ -59,12 +58,14 @@ function sizeFile($comment)
 /// Note - Restart id : ALTER TABLE `meida` AUTO_INCREMENT = 0;
 function publishMedia($comment)
 {
-    for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
-        for ($i = 0; $i < count($_FILES['mediaFile']['type']); $i++) {
-            $nameFile = $_FILES['mediaFile']['name'][$i];
-            $typeFile = $_FILES['mediaFile']['type'][$i];
-            databaseInsert($nameFile, $typeFile);
-        }
+    for ($i = 0; $i < count($_FILES['mediaFile']['type']); $i++) {
+        $nameFile = $_FILES['mediaFile']['name'][$i];
+        $typeFile = $_FILES['mediaFile']['type'][$i];
+
+        $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
+        move_uploaded_file($tmpName,"../uploads/$nameFile");
+        
+        //databaseInsert($nameFile, $typeFile);
     }
     publishCom($comment);
 }
@@ -99,4 +100,15 @@ function publishCom($comment)
         $query = connectDB()->prepare($sql);
         $query->execute([':com' => $comment, ':dateP' => $dateTime]);
     }
+}
+
+/// Fonction qui permet de crée un post avec une image et un commentaire
+function publishPost($img, $com)
+{
+    echo '<div class="panel panel-default">
+    <div class="panel-thumbnail"><img src="' . $img . '" class="img-responsive"></div>
+    <div class="panel-body">
+        <p>' . $com . '</p>
+    </div>
+</div>';
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le :  lun. 01 fév. 2021 à 12:49
+-- Généré le :  lun. 22 fév. 2021 à 09:37
 -- Version du serveur :  10.3.25-MariaDB-0+deb10u1
 -- Version de PHP :  7.3.19-1~deb10u1
 
@@ -33,17 +33,10 @@ USE `rs_m152`;
 CREATE TABLE `media` (
   `idMedia` int(11) NOT NULL,
   `nomFichierMedia` text NOT NULL,
-  `typeMedia` text NOT NULL
+  `typeMedia` text NOT NULL,
+  `dateCreation` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `idPost` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
---
--- Déchargement des données de la table `media`
---
-
-INSERT INTO `media` (`idMedia`, `nomFichierMedia`, `typeMedia`) VALUES
-(1, 'image_une.png', 'image/png'),
-(2, 'image_deux.jpg', 'image/jpeg'),
-(3, 'image_trois.jpg', 'image/jpeg');
 
 -- --------------------------------------------------------
 
@@ -65,7 +58,8 @@ CREATE TABLE `post` (
 -- Index pour la table `media`
 --
 ALTER TABLE `media`
-  ADD PRIMARY KEY (`idMedia`);
+  ADD PRIMARY KEY (`idMedia`),
+  ADD KEY `FOREIGN` (`idPost`) USING BTREE;
 
 --
 -- Index pour la table `post`
@@ -81,13 +75,23 @@ ALTER TABLE `post`
 -- AUTO_INCREMENT pour la table `media`
 --
 ALTER TABLE `media`
-  MODIFY `idMedia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idMedia` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `post`
 --
 ALTER TABLE `post`
   MODIFY `idPost` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Contraintes pour les tables déchargées
+--
+
+--
+-- Contraintes pour la table `media`
+--
+ALTER TABLE `media`
+  ADD CONSTRAINT `idPostMedia` FOREIGN KEY (`idPost`) REFERENCES `post` (`idPost`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
