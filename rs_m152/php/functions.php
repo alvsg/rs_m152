@@ -38,17 +38,22 @@ function connectDB()
 function sizeFile($comment)
 {
     $totalSize = 0;
+    $nombreImages = 0;
+
     for ($i = 0; $i < count($_FILES['mediaFile']['size']); $i++) {
         $sizeFile = $_FILES['mediaFile']['size'][$i];
-        if ($sizeFile < 3000000) {
+        if ($sizeFile < 3000000 && strpos($_FILES['mediaFile']['type'][$i], 'image/') || strpos($_FILES['mediaFile']['type'][$i], 'video/')) {
             $totalSize += $sizeFile;
+            $nombreImages++;
+            if ($nombreImages == count($_FILES['mediaFile']['size'])) {
+                if ($totalSize < 70000000) {
+                    publishMedia($comment);
+                }
+            }
         } else {
             echo '<div class="alert alert-danger" role="alert"> Fichier trop volumineux ! </div>';
             break;
         }
-    }
-    if ($totalSize < 70000000) {
-        publishMedia($comment);
     }
 }
 
@@ -67,20 +72,23 @@ function publishMedia($comment)
 {
     if ($comment != null) {
         publishCom($comment);
-
         for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
             $uniqNameFile = uniqid($_FILES['mediaFile']['name'][$i]);
-            if (str_contains($_FILES['mediaFile']['type'][$i], 'image/')) {
+            var_dump($uniqNameFile);
+            if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false) {
                 $typeFile = $_FILES['mediaFile']['type'][$i];
             } else {
-                echo '<div class="alert alert-warning" role="alert"> Le type du fichier ne confient pas ! </div>';
+                echo '<div class="alert alert-warning" role="alert"> Le type du fichier ne convient pas ! </div>';
             }
             $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
 
             // Boucle qui vérifie si la méthode move_upload_file
             if (move_uploaded_file($tmpName, "../uploads/$uniqNameFile")) {
-                databaseInsert($uniqNameFile, $typeFile, $comment);
-                header("Location: ../index.php");
+                if (databaseInsert($uniqNameFile, $typeFile, $comment)) {
+                    header("Location: ../index.php");
+                } else {
+                    unlink(glob("../uploads/$uniqNameFile"));
+                }
             } else {
                 echo '<div class="alert alert-warning" role="alert"> Le téléchargement a echoué ! </div>';
             }
@@ -91,19 +99,18 @@ function publishMedia($comment)
 }
 
 /// Fonction qui permet de récupérer l'id du commentaire
-function findIdOfComment($comment)
+function getLastId()
 {
-    $sql = "SELECT `idPost` FROM `post` WHERE `commentaire` LIKE :commentaire";
+    $sql = "SELECT `idPost` FROM `post` ORDER BY `idPost` DESC LIMIT 1";
     $query = connectDB()->prepare($sql);
-    $query->execute([':commentaire' => "%$comment%"]);
+    $query->execute();
     return $query->fetch(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet d'insérer dans la base de donnée
-function databaseInsert($nameFile, $typeFile, $comment)
+function databaseInsert($nameFile, $typeFile)
 {
-    $idPost = findIdOfComment($comment)['idPost'];
-
+    $idPost = getLastId()['idPost'];
     $sql = "INSERT INTO `media` (nomFichierMedia, typeMedia, idPost) VALUES (:nameFile, :typeFile, :idPost)";
     $query = connectDB()->prepare($sql);
     $query->execute([':nameFile' => $nameFile, ':typeFile' => $typeFile, ':idPost' => $idPost]);
@@ -118,14 +125,47 @@ function publishCom($comment)
     $query->execute([':com' => $comment]);
 }
 
+/// Fonction qui permet de récupérer
+function getAllForImg()
+{
+    $sql = "SELECT `nomFichierMedia`, `idPost`, `typeMedia` FROM `media`";
+    $query = connectDB()->prepare($sql);
+    $query->execute();
+    return $query->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/// Fonction qui permet de récupérer les commentaires selon l'id
+function getComById($id)
+{
+    $sql = "SELECT `commentaire` FROM `post` WHERE `idPost` LIKE :id";
+    $query = connectDB()->prepare($sql);
+    $query->execute([':id' => $id]);
+    return $query->fetch(PDO::FETCH_ASSOC);
+}
+
 /// Fonction qui permet de crée un post avec une image et un commentaire
 function publishPost()
 {
-
-    echo '<div class="panel panel-default">
-        <div class="panel-thumbnail"><img src="' . $img . '" class="img-responsive"></div>
-        <div class="panel-body">
-            <p>' . $com . '</p>
-        </div>
-    </div>';
+    $allImg = getAllForImg();
+    foreach ($allImg as $value) {
+        $commentaire = getComById($value["idPost"]);
+        switch ($value["typeMedia"]) {
+            case strpos($value["typeMedia"], 'image/'):
+                echo "  <div class=\"panel panel-default\">
+                <div class=\"panel-thumbnail\"><img src=\"uploads/" . $value["nomFichierMedia"] . "\" class=\"img-responsive\"></div>
+                <div class=\"panel-body\">
+                    <p>" . $commentaire["commentaire"] . "</p>
+                </div>
+            </div>";
+                break;
+            case strpos($value["typeMedia"], 'video/'):
+                echo "  <div class=\"panel panel-default\">
+                <div class=\"panel-thumbnail\"><video width=\"320\" height=\"240\" controls><source src=\"uploads/" . $value["nomFichierMedia"] . "\" type=\"".$value["typeMedia"]."\"></video></div>
+                <div class=\"panel-body\">
+                    <p>" . $commentaire["commentaire"] . "</p>
+                </div>
+            </div>";
+                break;
+        }
+    }
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le :  lun. 22 fév. 2021 à 09:37
+-- Généré le :  lun. 15 mars 2021 à 11:31
 -- Version du serveur :  10.3.25-MariaDB-0+deb10u1
 -- Version de PHP :  7.3.19-1~deb10u1
 
@@ -47,7 +47,8 @@ CREATE TABLE `media` (
 CREATE TABLE `post` (
   `idPost` int(11) NOT NULL,
   `commentaire` text NOT NULL,
-  `datePost` date NOT NULL
+  `datePost` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `modificationDate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --

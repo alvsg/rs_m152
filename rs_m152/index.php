@@ -190,7 +190,7 @@ include_once('php/functions.php');
                                     </div>
                                     -->
 
-                                    <?php publishPost('img/bg_4.jpg', 'test'); ?>
+                                    <?php publishPost(); ?>
                                     
                                     <!-- 
                                     <div class="panel panel-default">
