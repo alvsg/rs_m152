@@ -42,7 +42,7 @@ function sizeFile($comment)
 
     for ($i = 0; $i < count($_FILES['mediaFile']['size']); $i++) {
         $sizeFile = $_FILES['mediaFile']['size'][$i];
-        if ($sizeFile < 3000000 && strpos($_FILES['mediaFile']['type'][$i], 'image/') || strpos($_FILES['mediaFile']['type'][$i], 'video/')) {
+        if ($sizeFile < 3000000) {
             $totalSize += $sizeFile;
             $nombreImages++;
             if ($nombreImages == count($_FILES['mediaFile']['size'])) {
@@ -74,8 +74,7 @@ function publishMedia($comment)
         publishCom($comment);
         for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
             $uniqNameFile = uniqid($_FILES['mediaFile']['name'][$i]);
-            var_dump($uniqNameFile);
-            if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false) {
+            if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
                 $typeFile = $_FILES['mediaFile']['type'][$i];
             } else {
                 echo '<div class="alert alert-warning" role="alert"> Le type du fichier ne convient pas ! </div>';
@@ -146,9 +145,14 @@ function getComById($id)
 /// Fonction qui permet de crée un post avec une image et un commentaire
 function publishPost()
 {
+    $commentaire = "";
     $allImg = getAllForImg();
     foreach ($allImg as $value) {
-        $commentaire = getComById($value["idPost"]);
+        if ($commentaire != getComById($value["idPost"])) {
+            $commentaire = getComById($value["idPost"]);
+        }else{
+            $commentaire = "";
+        }
         switch ($value["typeMedia"]) {
             case strpos($value["typeMedia"], 'image/'):
                 echo "  <div class=\"panel panel-default\">
@@ -160,11 +164,19 @@ function publishPost()
                 break;
             case strpos($value["typeMedia"], 'video/'):
                 echo "  <div class=\"panel panel-default\">
-                <div class=\"panel-thumbnail\"><video width=\"320\" height=\"240\" controls><source src=\"uploads/" . $value["nomFichierMedia"] . "\" type=\"".$value["typeMedia"]."\"></video></div>
+                <div class=\"panel-thumbnail\"><video width=\"320\" height=\"240\" autoplay loop muted><source src=\"uploads/" . $value["nomFichierMedia"] . "\" type=\"" . $value["typeMedia"] . "\"></video></div>
                 <div class=\"panel-body\">
                     <p>" . $commentaire["commentaire"] . "</p>
                 </div>
             </div>";
+                break;
+            case strpos($value["typeMedia"], 'audio/'):
+                echo "  <div class=\"panel panel-default\">
+                    <div class=\"panel-thumbnail\"><audio controls><source src=\"uploads/" . $value["nomFichierMedia"] . "\" type=\"" . $value["typeMedia"] . "\"></video></div>
+                    <div class=\"panel-body\">
+                        <p>" . $commentaire["commentaire"] . "</p>
+                    </div>
+                </div>";
                 break;
         }
     }

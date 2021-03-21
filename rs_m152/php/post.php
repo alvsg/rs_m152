@@ -26,7 +26,7 @@ require_once('functions.php');
             <textarea name="text" rows="5" cols="55" style="resize: none;"></textarea>
             </br>
             Select a file :
-            <input type="file" id="mediaFile" accept="image/*, video/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">
+            <input type="file" id="mediaFile" accept="image/*, video/*, audio/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">
             <div id="infos"></div>
             <input type="submit" name="btnBlog" value="Upload">
             <script>
