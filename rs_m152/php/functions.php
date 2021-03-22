@@ -58,18 +58,19 @@ function sizeFile($comment)
 }
 
 /// Fonction qui permet de vérifier si le fichier est dans la base de donnée
-function databaseSelectEveryImage($nameFile)
+function databaseSelectImage($nameFile)
 {
     $sql = "SELECT * FROM `media` WHERE `nomFichierMedia` LIKE :nameFile";
     $query = connectDB()->prepare($sql);
     $query->execute([':nameFile' => "%$nameFile%"]);
-    $query->fetch(PDO::FETCH_ASSOC);
+    return $query->fetch(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet de définir un id unique et de publier une image
 /// Note - Restart id : ALTER TABLE `media` AUTO_INCREMENT = 0
 function publishMedia($comment)
 {
+    $exist = "";
     if ($comment != null) {
         publishCom($comment);
         for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
@@ -77,16 +78,25 @@ function publishMedia($comment)
             if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
                 $typeFile = $_FILES['mediaFile']['type'][$i];
             } else {
-                echo '<div class="alert alert-warning" role="alert"> Le type du fichier ne convient pas ! </div>';
+                echo '<div class="alert alert-danger" role="alert"> Le type du fichier ne convient pas ! </div>';
             }
             $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
 
             // Boucle qui vérifie si la méthode move_upload_file
             if (move_uploaded_file($tmpName, "../uploads/$uniqNameFile")) {
-                if (databaseInsert($uniqNameFile, $typeFile, $comment)) {
-                    header("Location: ../index.php");
+                if (file_exists("../uploads/$uniqNameFile") == true) {
+                    databaseInsert($uniqNameFile, $typeFile, $comment);
+                    $exist = databaseSelectImage($uniqNameFile);
+                    if ($exist != null) {
+                        header("Location: ../index.php");
+                    } else {
+                        var_dump($exist);
+                        echo '<div class="alert alert-warning" role="alert"> L\'ajout dans la base de donnée a echoué ! </div>';
+                    }
                 } else {
-                    unlink(glob("../uploads/$uniqNameFile"));
+                    if (unlink("../uploads/$uniqNameFile") != true) {
+                        echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
+                    }
                 }
             } else {
                 echo '<div class="alert alert-warning" role="alert"> Le téléchargement a echoué ! </div>';
@@ -111,8 +121,14 @@ function databaseInsert($nameFile, $typeFile)
 {
     $idPost = getLastId()['idPost'];
     $sql = "INSERT INTO `media` (nomFichierMedia, typeMedia, idPost) VALUES (:nameFile, :typeFile, :idPost)";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute([':nameFile' => $nameFile, ':typeFile' => $typeFile, ':idPost' => $idPost]);
+    try {
+        $query->execute([':nameFile' => $nameFile, ':typeFile' => $typeFile, ':idPost' => $idPost]);
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet d'insérer un commentaire et la date à laquel il a été posté
@@ -125,9 +141,9 @@ function publishCom($comment)
 }
 
 /// Fonction qui permet de récupérer
-function getAllForImg()
+function getAllFromPost()
 {
-    $sql = "SELECT `nomFichierMedia`, `idPost`, `typeMedia` FROM `media`";
+    $sql = "SELECT * FROM `post`";
     $query = connectDB()->prepare($sql);
     $query->execute();
     return $query->fetchAll(PDO::FETCH_ASSOC);
@@ -142,42 +158,60 @@ function getComById($id)
     return $query->fetch(PDO::FETCH_ASSOC);
 }
 
+/// Fonction qui permet de récupérer les commentaires selon l'id
+function getMediaByIdPost($id)
+{
+    $sql = "SELECT * FROM `media` WHERE `idPost` LIKE :id";
+    $query = connectDB()->prepare($sql);
+    $query->execute([':id' => $id]);
+    return $query->fetchAll(PDO::FETCH_ASSOC);
+}
+
 /// Fonction qui permet de crée un post avec une image et un commentaire
 function publishPost()
 {
     $commentaire = "";
-    $allImg = getAllForImg();
-    foreach ($allImg as $value) {
-        if ($commentaire != getComById($value["idPost"])) {
-            $commentaire = getComById($value["idPost"]);
-        }else{
-            $commentaire = "";
+    $value = [];
+    $media = "";
+    $allPost = getAllFromPost();
+
+    foreach ($allPost as $post) {
+        $value = getMediaByIdPost($post['idPost']);
+        $commentaire = getComById($post['idPost']);
+        if (count($value) > 1) {
+            $media = "<div id=\"carouselExampleControls\" class=\"carousel slide\" data-ride=\"carousel\"><div class=\"carousel-inner\">";
+            $cont = 0;
+            foreach ($value as $v) {
+                $media .= sprintf("<div class=\"carousel-item %s\">", $cont == 0?"active":"");
+
+                switch ($v["typeMedia"]) {
+                    case strpos($v["typeMedia"], 'image/'):
+                        $media .= " <img src=\"uploads/" . $v["nomFichierMedia"] . "\" width=\"435\" height=\"435\" class=\"img-responsive\">";
+                        break;
+                    case strpos($v["typeMedia"], 'video/'):
+                        $media .= "<video width=\"435\" height=\"435\" autoplay loop muted><source src=\"uploads/" . $v["nomFichierMedia"] . "\" type=\"" . $v["typeMedia"] . "\"></video>";
+                        break;
+                    case strpos($v["typeMedia"], 'audio/'):
+                        $media .= "<audio controls><source src=\"uploads/" . $v["nomFichierMedia"] . "\" type=\"" . $v["typeMedia"] . "\"></video>";
+                        break;
+                }
+                
+                $media .= "</div>";
+            }
+            $media .= "</div> <a class=\"carousel-control-prev\" href=\"#carouselExampleControls\" role=\"button\" data-slide=\"prev\"><span class=\"carousel-control-prev-icon\" aria-hidden=\"true\"></span><span class=\"sr-only\">Previous</span></a><a class=\"carousel-control-next\" href=\"#carouselExampleControls\" role=\"button\" data-slide=\"next\"><span class=\"carousel-control-next-icon\" aria-hidden=\"true\"></span><span class=\"sr-only\">Next</span></a></div>";
+        } else {
+            switch ($value[0]["typeMedia"]) {
+                case strpos($value[0]["typeMedia"], 'image/'):
+                    $media = "<img src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" width=\"435\" height=\"435\" class=\"img-responsive\">";
+                    break;
+                case strpos($value[0]["typeMedia"], 'video/'):
+                    $media = "<video width=\"435\" height=\"435\" autoplay loop muted><source src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" type=\"" . $value[0]["typeMedia"] . "\"></video>";
+                    break;
+                case strpos($value[0]["typeMedia"], 'audio/'):
+                    $media = "<audio controls><source src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" type=\"" . $value[0]["typeMedia"] . "\"></video>";
+                    break;
+            }
         }
-        switch ($value["typeMedia"]) {
-            case strpos($value["typeMedia"], 'image/'):
-                echo "  <div class=\"panel panel-default\">
-                <div class=\"panel-thumbnail\"><img src=\"uploads/" . $value["nomFichierMedia"] . "\" class=\"img-responsive\"></div>
-                <div class=\"panel-body\">
-                    <p>" . $commentaire["commentaire"] . "</p>
-                </div>
-            </div>";
-                break;
-            case strpos($value["typeMedia"], 'video/'):
-                echo "  <div class=\"panel panel-default\">
-                <div class=\"panel-thumbnail\"><video width=\"320\" height=\"240\" autoplay loop muted><source src=\"uploads/" . $value["nomFichierMedia"] . "\" type=\"" . $value["typeMedia"] . "\"></video></div>
-                <div class=\"panel-body\">
-                    <p>" . $commentaire["commentaire"] . "</p>
-                </div>
-            </div>";
-                break;
-            case strpos($value["typeMedia"], 'audio/'):
-                echo "  <div class=\"panel panel-default\">
-                    <div class=\"panel-thumbnail\"><audio controls><source src=\"uploads/" . $value["nomFichierMedia"] . "\" type=\"" . $value["typeMedia"] . "\"></video></div>
-                    <div class=\"panel-body\">
-                        <p>" . $commentaire["commentaire"] . "</p>
-                    </div>
-                </div>";
-                break;
-        }
+        echo "<div class=\"panel panel-default\"> <div class=\"panel-thumbnail\">" . $media . " </div> <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p> </div> </div>";
     }
 }
