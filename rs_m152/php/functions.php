@@ -61,9 +61,15 @@ function sizeFile($comment)
 function databaseSelectImage($nameFile)
 {
     $sql = "SELECT * FROM `media` WHERE `nomFichierMedia` LIKE :nameFile";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute([':nameFile' => "%$nameFile%"]);
-    return $query->fetch(PDO::FETCH_ASSOC);
+    try {
+        $query->execute([':nameFile' => "%$nameFile%"]);
+        connectDB()->commit();
+        return $query->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet de définir un id unique et de publier une image
@@ -90,7 +96,6 @@ function publishMedia($comment)
                     if ($exist != null) {
                         header("Location: ../index.php");
                     } else {
-                        var_dump($exist);
                         echo '<div class="alert alert-warning" role="alert"> L\'ajout dans la base de donnée a echoué ! </div>';
                     }
                 } else {
@@ -111,9 +116,15 @@ function publishMedia($comment)
 function getLastId()
 {
     $sql = "SELECT `idPost` FROM `post` ORDER BY `idPost` DESC LIMIT 1";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute();
-    return $query->fetch(PDO::FETCH_ASSOC);
+    try {
+        $query->execute();
+        connectDB()->commit();
+        return $query->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet d'insérer dans la base de donnée
@@ -136,35 +147,59 @@ function databaseInsert($nameFile, $typeFile)
 function publishCom($comment)
 {
     $sql = "INSERT INTO `post` (commentaire) VALUES (:com)";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute([':com' => $comment]);
+    try {
+        $query->execute([':com' => $comment]);
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet de récupérer
 function getAllFromPost()
 {
     $sql = "SELECT * FROM `post`";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute();
-    return $query->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $query->execute();
+        connectDB()->commit();
+        return $query->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet de récupérer les commentaires selon l'id
 function getComById($id)
 {
     $sql = "SELECT `commentaire` FROM `post` WHERE `idPost` LIKE :id";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute([':id' => $id]);
-    return $query->fetch(PDO::FETCH_ASSOC);
+    try {
+        $query->execute([':id' => $id]);
+        connectDB()->commit();
+        return $query->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet de récupérer les commentaires selon l'id
 function getMediaByIdPost($id)
 {
     $sql = "SELECT * FROM `media` WHERE `idPost` LIKE :id";
+    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    $query->execute([':id' => $id]);
-    return $query->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $query->execute([':id' => $id]);
+        connectDB()->commit();
+        return $query->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
 }
 
 /// Fonction qui permet de crée un post avec une image et un commentaire
@@ -182,7 +217,7 @@ function publishPost()
             $media = "<div id=\"carouselExampleControls\" class=\"carousel slide\" data-ride=\"carousel\"><div class=\"carousel-inner\">";
             $cont = 0;
             foreach ($value as $v) {
-                $media .= sprintf("<div class=\"carousel-item %s\">", $cont == 0?"active":"");
+                $media .= sprintf("<div class=\"carousel-item %s\">", $cont == 0 ? "active" : "");
 
                 switch ($v["typeMedia"]) {
                     case strpos($v["typeMedia"], 'image/'):
@@ -195,7 +230,7 @@ function publishPost()
                         $media .= "<audio controls><source src=\"uploads/" . $v["nomFichierMedia"] . "\" type=\"" . $v["typeMedia"] . "\"></video>";
                         break;
                 }
-                
+
                 $media .= "</div>";
             }
             $media .= "</div> <a class=\"carousel-control-prev\" href=\"#carouselExampleControls\" role=\"button\" data-slide=\"prev\"><span class=\"carousel-control-prev-icon\" aria-hidden=\"true\"></span><span class=\"sr-only\">Previous</span></a><a class=\"carousel-control-next\" href=\"#carouselExampleControls\" role=\"button\" data-slide=\"next\"><span class=\"carousel-control-next-icon\" aria-hidden=\"true\"></span><span class=\"sr-only\">Next</span></a></div>";
@@ -212,6 +247,45 @@ function publishPost()
                     break;
             }
         }
+        
         echo "<div class=\"panel panel-default\"> <div class=\"panel-thumbnail\">" . $media . " </div> <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p> </div> </div>";
+        //echo "<div class=\"panel panel-default\"> <button onclick=\"" . deletePost($value[0]["nomFichierMedia"], $commentaire) . "\">Supprimer</button> <div class=\"panel-thumbnail\">" . $media . " </div> <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p> </div> </div>";
     }
+}
+
+/// Fonction qui permet de supprimer de la base de donnée le fichier voulu
+function deleteFileInDB($nameFile)
+{
+    $sql = "DELETE FROM `media` WHERE `nomFichierMedia` LIKE :nameFile";
+    connectDB()->beginTransaction();
+    $query = connectDB()->prepare($sql);
+    try {
+        $query->execute([':nameFile' => $nameFile]);
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
+}
+
+/// Fonction qui permet de supprimer le commentaire de la base de donnée voulu
+function deleteComInDB($com)
+{
+    $sql = "DELETE FROM `post` WHERE `idPost` LIKE :com";
+    connectDB()->beginTransaction();
+    $query = connectDB()->prepare($sql);
+    try {
+        $query->execute([':com' => $com]);
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
+}
+
+/// Fonction qui permet de supprimer un post
+function deletePost($nameFile, $com)
+{
+    var_dump($nameFile);
+    unlink("uploads/$nameFile");
+    deleteComInDB($com);
+    deleteFileInDB($nameFile);
 }
