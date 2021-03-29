@@ -3,10 +3,16 @@ require_once("config.inc.php");
 
 $btnBlog = filter_input(INPUT_POST, 'btnBlog', FILTER_SANITIZE_STRING);
 $comments = filter_input(INPUT_POST, 'text', FILTER_DEFAULT);
+$btnBlog = explode("/", $btnBlog);
 
-switch ($btnBlog) {
+switch ($btnBlog[0]) {
     case 'Upload':
         sizeFile($comments);
+        break;
+    case 'delete':
+        deletePost($btnBlog[1]);
+        break;
+    case 'update':
         break;
 }
 
@@ -61,15 +67,9 @@ function sizeFile($comment)
 function databaseSelectImage($nameFile)
 {
     $sql = "SELECT * FROM `media` WHERE `nomFichierMedia` LIKE :nameFile";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':nameFile' => "%$nameFile%"]);
-        connectDB()->commit();
-        return $query->fetch(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':nameFile' => "%$nameFile%"]);
+    return $query->fetch(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet de définir un id unique et de publier une image
@@ -78,34 +78,40 @@ function publishMedia($comment)
 {
     $exist = "";
     if ($comment != null) {
-        publishCom($comment);
-        for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
-            $uniqNameFile = uniqid($_FILES['mediaFile']['name'][$i]);
-            if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
-                $typeFile = $_FILES['mediaFile']['type'][$i];
-            } else {
-                echo '<div class="alert alert-danger" role="alert"> Le type du fichier ne convient pas ! </div>';
-            }
-            $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
+        connectDB()->beginTransaction();
+        try {
+            publishCom($comment);
+            for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
+                $uniqNameFile = uniqid($_FILES['mediaFile']['name'][$i]);
+                if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
+                    $typeFile = $_FILES['mediaFile']['type'][$i];
+                } else {
+                    echo '<div class="alert alert-danger" role="alert"> Le type du fichier ne convient pas ! </div>';
+                }
+                $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
 
-            // Boucle qui vérifie si la méthode move_upload_file
-            if (move_uploaded_file($tmpName, "../uploads/$uniqNameFile")) {
-                if (file_exists("../uploads/$uniqNameFile") == true) {
-                    databaseInsert($uniqNameFile, $typeFile, $comment);
-                    $exist = databaseSelectImage($uniqNameFile);
-                    if ($exist != null) {
-                        header("Location: ../index.php");
+                // Boucle qui vérifie si la méthode move_upload_file
+                if (move_uploaded_file($tmpName, "../uploads/$uniqNameFile")) {
+                    if (file_exists("../uploads/$uniqNameFile") == true) {
+                        databaseInsert($uniqNameFile, $typeFile, $comment);
+                        $exist = databaseSelectImage($uniqNameFile);
+                        if ($exist != null) {
+                            header("Location: ../index.php");
+                        } else {
+                            echo '<div class="alert alert-warning" role="alert"> L\'ajout dans la base de donnée a echoué ! </div>';
+                        }
                     } else {
-                        echo '<div class="alert alert-warning" role="alert"> L\'ajout dans la base de donnée a echoué ! </div>';
+                        if (unlink("../uploads/$uniqNameFile") != true) {
+                            echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
+                        }
                     }
                 } else {
-                    if (unlink("../uploads/$uniqNameFile") != true) {
-                        echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
-                    }
+                    echo '<div class="alert alert-warning" role="alert"> Le téléchargement a echoué ! </div>';
                 }
-            } else {
-                echo '<div class="alert alert-warning" role="alert"> Le téléchargement a echoué ! </div>';
             }
+            connectDB()->commit();
+        } catch (Exception $e) {
+            connectDB()->rollBack();
         }
     } else {
         echo '<div class="alert alert-danger" role="alert"> Veuillez entrer un commentaire ! </div>';
@@ -116,15 +122,9 @@ function publishMedia($comment)
 function getLastId()
 {
     $sql = "SELECT `idPost` FROM `post` ORDER BY `idPost` DESC LIMIT 1";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute();
-        connectDB()->commit();
-        return $query->fetch(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute();
+    return $query->fetch(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet d'insérer dans la base de donnée
@@ -132,14 +132,8 @@ function databaseInsert($nameFile, $typeFile)
 {
     $idPost = getLastId()['idPost'];
     $sql = "INSERT INTO `media` (nomFichierMedia, typeMedia, idPost) VALUES (:nameFile, :typeFile, :idPost)";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':nameFile' => $nameFile, ':typeFile' => $typeFile, ':idPost' => $idPost]);
-        connectDB()->commit();
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':nameFile' => $nameFile, ':typeFile' => $typeFile, ':idPost' => $idPost]);
 }
 
 /// Fonction qui permet d'insérer un commentaire et la date à laquel il a été posté
@@ -147,59 +141,35 @@ function databaseInsert($nameFile, $typeFile)
 function publishCom($comment)
 {
     $sql = "INSERT INTO `post` (commentaire) VALUES (:com)";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':com' => $comment]);
-        connectDB()->commit();
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':com' => $comment]);
 }
 
 /// Fonction qui permet de récupérer
 function getAllFromPost()
 {
-    $sql = "SELECT * FROM `post`";
-    connectDB()->beginTransaction();
+    $sql = "SELECT * FROM `post` ORDER BY `idPost` DESC";
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute();
-        connectDB()->commit();
-        return $query->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute();
+    return $query->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet de récupérer les commentaires selon l'id
 function getComById($id)
 {
     $sql = "SELECT `commentaire` FROM `post` WHERE `idPost` LIKE :id";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':id' => $id]);
-        connectDB()->commit();
-        return $query->fetch(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':id' => $id]);
+    return $query->fetch(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet de récupérer les commentaires selon l'id
 function getMediaByIdPost($id)
 {
     $sql = "SELECT * FROM `media` WHERE `idPost` LIKE :id";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':id' => $id]);
-        connectDB()->commit();
-        return $query->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':id' => $id]);
+    return $query->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /// Fonction qui permet de crée un post avec une image et un commentaire
@@ -247,45 +217,44 @@ function publishPost()
                     break;
             }
         }
-        
-        echo "<div class=\"panel panel-default\"> <div class=\"panel-thumbnail\">" . $media . " </div> <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p> </div> </div>";
-        //echo "<div class=\"panel panel-default\"> <button onclick=\"" . deletePost($value[0]["nomFichierMedia"], $commentaire) . "\">Supprimer</button> <div class=\"panel-thumbnail\">" . $media . " </div> <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p> </div> </div>";
+        echo "<div class=\"panel panel-default fixed\">
+            <div class=\"panel-body\" style=\"padding : 0px\">
+                <form method=\"POST\" action=\"index.php\">
+                    <button type=\"submit\" name=\"btnBlog\" class=\"btn\" style=\" float : right\" value=\"update/" . $post["idPost"] . "\"><i class=\"bi bi-pencil\"></i></button>
+                    <button type=\"submit\" name=\"btnBlog\" class=\"btn\" style=\" float : right\" value=\"delete/" . $post["idPost"] . "\"><i class=\"bi bi-trash\"></i></button>
+                </form>
+            </div>
+            <div class=\"panel-body\" style=\"padding : 0px\">" . $media . " </div>
+            <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p>
+            </div>
+            </div>";
     }
 }
 
 /// Fonction qui permet de supprimer de la base de donnée le fichier voulu
-function deleteFileInDB($nameFile)
+function deleteFileInDB($file)
 {
-    $sql = "DELETE FROM `media` WHERE `nomFichierMedia` LIKE :nameFile";
-    connectDB()->beginTransaction();
+    $sql = "DELETE FROM `media` WHERE `idPost` LIKE :nameFile";
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':nameFile' => $nameFile]);
-        connectDB()->commit();
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':nameFile' => $file]);
 }
 
 /// Fonction qui permet de supprimer le commentaire de la base de donnée voulu
 function deleteComInDB($com)
 {
     $sql = "DELETE FROM `post` WHERE `idPost` LIKE :com";
-    connectDB()->beginTransaction();
     $query = connectDB()->prepare($sql);
-    try {
-        $query->execute([':com' => $com]);
-        connectDB()->commit();
-    } catch (Exception $e) {
-        connectDB()->rollBack();
-    }
+    $query->execute([':com' => $com]);
 }
 
-/// Fonction qui permet de supprimer un post
-function deletePost($nameFile, $com)
+/// Fonction qui permet de supprimer un post en fonction de son identifiant
+function deletePost($idPost)
 {
-    var_dump($nameFile);
-    unlink("uploads/$nameFile");
-    deleteComInDB($com);
-    deleteFileInDB($nameFile);
+    $nameFile = getMediaByIdPost($idPost);
+    foreach ($nameFile as $item) {
+        $n = $item["nomFichierMedia"];
+        unlink("uploads/$n");
+    }
+    deleteFileInDB($idPost);
+    deleteComInDB($idPost);
 }

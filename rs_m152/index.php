@@ -68,7 +68,7 @@ include_once('php/functions.php');
                                             <p class="lead">Nom blog</p>
                                             <p>45 Followers, 13 Posts</p>
                                             <p>
-                                                <img src="img/150x150.jpg" height="28px" width="28px">
+                                                <img src="img/150x150.gif" height="28px" width="28px">
                                             </p>
                                         </div>
                                     </div>
