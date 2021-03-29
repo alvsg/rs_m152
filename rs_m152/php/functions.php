@@ -1,6 +1,11 @@
 <?php
 require_once("config.inc.php");
 
+if (!isset($_SESSION)) {
+    session_start();
+    $_SESSION['file'] = "";
+}
+
 $btnBlog = filter_input(INPUT_POST, 'btnBlog', FILTER_SANITIZE_STRING);
 $comments = filter_input(INPUT_POST, 'text', FILTER_DEFAULT);
 $btnBlog = explode("/", $btnBlog);
@@ -13,6 +18,9 @@ switch ($btnBlog[0]) {
         deletePost($btnBlog[1]);
         break;
     case 'update':
+        $file = getMediaByIdPost($btnBlog[1]);
+        $_SESSION['file'] = $file;
+        header("Location: php/post.php");
         break;
 }
 
