@@ -1,9 +1,8 @@
 <?php
 require_once("config.inc.php");
 
-if (!isset($_SESSION)) {
+if (!isset($_SESSION['file'])) {
     session_start();
-    $_SESSION['file'] = "";
 }
 
 $btnBlog = filter_input(INPUT_POST, 'btnBlog', FILTER_SANITIZE_STRING);
@@ -21,6 +20,11 @@ switch ($btnBlog[0]) {
         $file = getMediaByIdPost($btnBlog[1]);
         $_SESSION['file'] = $file;
         header("Location: php/post.php");
+        break;
+    case 'Modify':
+        modifyPost($_SESSION['file'][0]['idPost'], $comments);
+        //$_SESSION['file'] = "";
+        //header("Location: ../index.php");
         break;
 }
 
@@ -90,7 +94,10 @@ function publishMedia($comment)
         try {
             publishCom($comment);
             for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
-                $uniqNameFile = uniqid($_FILES['mediaFile']['name'][$i]);
+                $name = preg_replace('/\.([^ ]+)/', '', $_FILES['mediaFile']['name'][$i]);
+                $uniqNameFile = uniqid($name);
+                $extension = preg_replace('/.*(?=\.)/', '', $_FILES['mediaFile']['name'][$i]);
+                $uniqNameFile .= $extension;
                 if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
                     $typeFile = $_FILES['mediaFile']['type'][$i];
                 } else {
@@ -265,4 +272,17 @@ function deletePost($idPost)
     }
     deleteFileInDB($idPost);
     deleteComInDB($idPost);
+}
+
+/// Fonction qui permet de modifier les post en mettant à jour les informations dans la base de donnée
+function modifyPost($idPost, $comments)
+{
+    $DBcom = getComById($idPost);
+    if($comments != $DBcom){
+        echo "update commentaire in db";
+    }
+
+    if ($_FILES['mediaFile']['name'][0] != null) {
+        echo" update img with idPost in ";
+    }
 }

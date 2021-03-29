@@ -7,7 +7,14 @@
 
 <?php
 require_once('functions.php');
-var_dump($_SESSION);
+
+if ($_SESSION['file'] != "") {
+    $btnValue = "Modify";
+    $com = getComById($_SESSION['file'][0]['idPost']);
+    $file = $_SESSION['file'][0]['nomFichierMedia'];
+} else {
+    $btnValue = "Upload";
+}
 ?>
 
 <!DOCTYPE html>
@@ -23,13 +30,26 @@ var_dump($_SESSION);
 
 <body>
     <div class="container-fluid mt-2">
+        Files :
+        </br>
+        <?php
+        for ($i = 0; $i < count($_SESSION['file']); $i++) {
+            echo "<img class=\"m-2\" height=\"300\" width=\"300\" src=\"../uploads/" . $_SESSION['file'][$i]['nomFichierMedia'] . "\">";
+            $row++;
+            if($row == 3){
+                echo "</br>";
+                $row = 0;
+            }
+        }
+        ?>
+        </br>
         <form method="POST" action="" enctype="multipart/form-data">
-            <textarea name="text" rows="5" cols="55" style="resize: none;"></textarea>
+            <textarea name="text" rows="5" cols="55" style="resize: none;"><?php if ($com['commentaire'] != null) echo $com['commentaire'] ?></textarea>
             </br>
             Select a file :
             <input type="file" id="mediaFile" accept="image/*, video/*, audio/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">
             <div id="infos"></div>
-            <input type="submit" name="btnBlog" value="Upload">
+            <input type="submit" name="btnBlog" value="<?= $btnValue ?>">
             <script>
                 // Fonction qui permet d'afficher la taille total, le nom et le nombre de(s) fichier(s)
                 function analyseFichiers(fichiers) {
