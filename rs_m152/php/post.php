@@ -12,7 +12,7 @@ if ($_SESSION['file'] != "") {
     $btnValue = "Modify";
     $com = getComById($_SESSION['file'][0]['idPost']);
     if($com == null){
-        $com = $_SESSION['file']['commentaire'];
+        $com = $_SESSION['file'];
     }
 } else {
     $btnValue = "Upload";
@@ -33,7 +33,7 @@ if ($_SESSION['file'] != "") {
 <body>
     <div class="container-fluid mt-2">
         <form method="POST" action="" enctype="multipart/form-data">
-            <textarea name="text" rows="5" cols="55" style="resize: none;"><?php if ($com != null) echo $com ?></textarea>
+            <textarea name="text" rows="5" cols="55" style="resize: none;"><?php if ($com['commentaire'] != null) echo $com['commentaire'] ?></textarea>
             </br>
             Select a file :
             <input type="file" id="mediaFile" accept="image/*, video/*, audio/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">

@@ -28,8 +28,8 @@ switch ($btnBlog[0]) {
         if ($_SESSION['file'][0]['idPost'] != null) {
             modifyPost($_SESSION['file'][0]['idPost'], $comments);
         }
-        //$_SESSION['file'] = "";
-        //header("Location: ../index.php");
+        $_SESSION['file'] = "";
+        header("Location: ../index.php");
         break;
 }
 
