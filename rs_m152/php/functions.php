@@ -18,11 +18,16 @@ switch ($btnBlog[0]) {
         break;
     case 'update':
         $file = getMediaByIdPost($btnBlog[1]);
+        if ($file == null) {
+            $file = getComById($btnBlog[1]);
+        }
         $_SESSION['file'] = $file;
         header("Location: php/post.php");
         break;
     case 'Modify':
-        modifyPost($_SESSION['file'][0]['idPost'], $comments);
+        if ($_SESSION['file'][0]['idPost'] != null) {
+            modifyPost($_SESSION['file'][0]['idPost'], $comments);
+        }
         //$_SESSION['file'] = "";
         //header("Location: ../index.php");
         break;
@@ -84,50 +89,58 @@ function databaseSelectImage($nameFile)
     return $query->fetch(PDO::FETCH_ASSOC);
 }
 
+function addImgInDB($comment)
+{
+    $exist = "";
+    connectDB()->beginTransaction();
+    try {
+        publishCom($comment);
+        for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
+            $name = preg_replace('/\.([^ ]+)/', '', $_FILES['mediaFile']['name'][$i]);
+            $uniqNameFile = uniqid($name);
+            $extension = preg_replace('/.*(?=\.)/', '', $_FILES['mediaFile']['name'][$i]);
+            $uniqNameFile .= $extension;
+            if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
+                $typeFile = $_FILES['mediaFile']['type'][$i];
+            } else {
+                echo '<div class="alert alert-danger" role="alert"> Le type du fichier ne convient pas ! </div>';
+            }
+            $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
+
+            // Boucle qui vérifie si la méthode move_upload_file
+            if (move_uploaded_file($tmpName, "../uploads/$uniqNameFile")) {
+                if (file_exists("../uploads/$uniqNameFile") == true) {
+                    databaseInsert($uniqNameFile, $typeFile, $comment);
+                    $exist = databaseSelectImage($uniqNameFile);
+                    if ($exist != null) {
+                        header("Location: ../index.php");
+                    } else {
+                        echo '<div class="alert alert-warning" role="alert"> L\'ajout dans la base de donnée a echoué ! </div>';
+                    }
+                } else {
+                    if (unlink("../uploads/$uniqNameFile") != true) {
+                        echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
+                    }
+                }
+            } else {
+                echo '<div class="alert alert-warning" role="alert"> Le téléchargement a echoué ! </div>';
+            }
+        }
+        if ($_FILES['mediaFile']['name'][0] == null) {
+            header("Location: ../index.php");
+        }
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
+    }
+}
+
 /// Fonction qui permet de définir un id unique et de publier une image
 /// Note - Restart id : ALTER TABLE `media` AUTO_INCREMENT = 0
 function publishMedia($comment)
 {
-    $exist = "";
     if ($comment != null) {
-        connectDB()->beginTransaction();
-        try {
-            publishCom($comment);
-            for ($i = 0; $i < count($_FILES['mediaFile']['name']); $i++) {
-                $name = preg_replace('/\.([^ ]+)/', '', $_FILES['mediaFile']['name'][$i]);
-                $uniqNameFile = uniqid($name);
-                $extension = preg_replace('/.*(?=\.)/', '', $_FILES['mediaFile']['name'][$i]);
-                $uniqNameFile .= $extension;
-                if (strpos($_FILES['mediaFile']['type'][$i], 'image/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'video/') !== false || strpos($_FILES['mediaFile']['type'][$i], 'audio/') !== false) {
-                    $typeFile = $_FILES['mediaFile']['type'][$i];
-                } else {
-                    echo '<div class="alert alert-danger" role="alert"> Le type du fichier ne convient pas ! </div>';
-                }
-                $tmpName = $_FILES["mediaFile"]["tmp_name"][$i];
-
-                // Boucle qui vérifie si la méthode move_upload_file
-                if (move_uploaded_file($tmpName, "../uploads/$uniqNameFile")) {
-                    if (file_exists("../uploads/$uniqNameFile") == true) {
-                        databaseInsert($uniqNameFile, $typeFile, $comment);
-                        $exist = databaseSelectImage($uniqNameFile);
-                        if ($exist != null) {
-                            header("Location: ../index.php");
-                        } else {
-                            echo '<div class="alert alert-warning" role="alert"> L\'ajout dans la base de donnée a echoué ! </div>';
-                        }
-                    } else {
-                        if (unlink("../uploads/$uniqNameFile") != true) {
-                            echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
-                        }
-                    }
-                } else {
-                    echo '<div class="alert alert-warning" role="alert"> Le téléchargement a echoué ! </div>';
-                }
-            }
-            connectDB()->commit();
-        } catch (Exception $e) {
-            connectDB()->rollBack();
-        }
+        addImgInDB($comment);
     } else {
         echo '<div class="alert alert-danger" role="alert"> Veuillez entrer un commentaire ! </div>';
     }
@@ -193,6 +206,7 @@ function publishPost()
     $commentaire = "";
     $value = [];
     $media = "";
+    $post = "";
     $allPost = getAllFromPost();
 
     foreach ($allPost as $post) {
@@ -206,10 +220,10 @@ function publishPost()
 
                 switch ($v["typeMedia"]) {
                     case strpos($v["typeMedia"], 'image/'):
-                        $media .= " <img src=\"uploads/" . $v["nomFichierMedia"] . "\" width=\"435\" height=\"435\" class=\"img-responsive\">";
+                        $media .= " <img src=\"uploads/" . $v["nomFichierMedia"] . "\" width=\"399\" height=\"399\" class=\"img-responsive\">";
                         break;
                     case strpos($v["typeMedia"], 'video/'):
-                        $media .= "<video width=\"435\" height=\"435\" autoplay loop muted><source src=\"uploads/" . $v["nomFichierMedia"] . "\" type=\"" . $v["typeMedia"] . "\"></video>";
+                        $media .= "<video width=\"399\" height=\"399\" autoplay loop muted><source src=\"uploads/" . $v["nomFichierMedia"] . "\" type=\"" . $v["typeMedia"] . "\"></video>";
                         break;
                     case strpos($v["typeMedia"], 'audio/'):
                         $media .= "<audio controls><source src=\"uploads/" . $v["nomFichierMedia"] . "\" type=\"" . $v["typeMedia"] . "\"></video>";
@@ -222,27 +236,31 @@ function publishPost()
         } else {
             switch ($value[0]["typeMedia"]) {
                 case strpos($value[0]["typeMedia"], 'image/'):
-                    $media = "<img src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" width=\"435\" height=\"435\" class=\"img-responsive\">";
+                    $media = "<img src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" width=\"399\" height=\"399\" class=\"img-responsive\">";
                     break;
                 case strpos($value[0]["typeMedia"], 'video/'):
-                    $media = "<video width=\"435\" height=\"435\" autoplay loop muted><source src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" type=\"" . $value[0]["typeMedia"] . "\"></video>";
+                    $media = "<video width=\"399\" height=\"399\" autoplay loop muted><source src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" type=\"" . $value[0]["typeMedia"] . "\"></video>";
                     break;
                 case strpos($value[0]["typeMedia"], 'audio/'):
                     $media = "<audio controls><source src=\"uploads/" . $value[0]["nomFichierMedia"] . "\" type=\"" . $value[0]["typeMedia"] . "\"></video>";
                     break;
             }
         }
-        echo "<div class=\"panel panel-default fixed\">
+        $post = "<div class=\"panel panel-default fixed\">
             <div class=\"panel-body\" style=\"padding : 0px\">
                 <form method=\"POST\" action=\"index.php\">
                     <button type=\"submit\" name=\"btnBlog\" class=\"btn\" style=\" float : right\" value=\"update/" . $post["idPost"] . "\"><i class=\"bi bi-pencil\"></i></button>
                     <button type=\"submit\" name=\"btnBlog\" class=\"btn\" style=\" float : right\" value=\"delete/" . $post["idPost"] . "\"><i class=\"bi bi-trash\"></i></button>
                 </form>
-            </div>
-            <div class=\"panel-body\" style=\"padding : 0px\">" . $media . " </div>
-            <div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p>
+            </div>";
+        if ($value != null) {
+            $post .= "<div class=\"panel-body\" style=\"padding : 0px\">" . $media . " </div>";
+        }
+        $post .= "<div class=\"panel-body\"> <p>" . $commentaire["commentaire"] . "</p>
             </div>
             </div>";
+
+        echo $post;
     }
 }
 
@@ -278,11 +296,36 @@ function deletePost($idPost)
 function modifyPost($idPost, $comments)
 {
     $DBcom = getComById($idPost);
-    if($comments != $DBcom){
-        echo "update commentaire in db";
+    if (strcmp($comments, $DBcom['commentaire']) != 0 && $comments != null) {
+        updateComPost($idPost, $comments);
+    } else {
+        echo '<div class="alert alert-danger" role="alert"> Le champs du commentaire est vide ! </div>';
     }
 
     if ($_FILES['mediaFile']['name'][0] != null) {
-        echo" update img with idPost in ";
+        $allOldImg = getMediaByIdPost($idPost);
+        foreach ($allOldImg as $oldImg) {
+            if (unlink("../uploads/" . $oldImg['nomFichierMedia']) != true) {
+                echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
+            }
+        }
+        deleteImgInDB($idPost);
+        addImgInDB($comments);
     }
+}
+
+/// Fonction qui permet de mettre à jour les commentaires dans la base de donnée
+function updateComPost($idPost, $newCom)
+{
+    $sql = "UPDATE `post` SET `commentaire` = :newCom WHERE `idPost` LIKE :idPost";
+    $query = connectDB()->prepare($sql);
+    $query->execute([':newCom' => $newCom, ':idPost' => $idPost]);
+}
+
+/// Fonction qui permet de supprimer l'image de la base de donnée voulu
+function deleteImgInDB($idPost)
+{
+    $sql = "DELETE FROM `media` WHERE `idPost` LIKE :idPost";
+    $query = connectDB()->prepare($sql);
+    $query->execute([':idPost' => $idPost]);
 }

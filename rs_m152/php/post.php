@@ -11,7 +11,9 @@ require_once('functions.php');
 if ($_SESSION['file'] != "") {
     $btnValue = "Modify";
     $com = getComById($_SESSION['file'][0]['idPost']);
-    $file = $_SESSION['file'][0]['nomFichierMedia'];
+    if($com == null){
+        $com = $_SESSION['file']['commentaire'];
+    }
 } else {
     $btnValue = "Upload";
 }
@@ -30,21 +32,8 @@ if ($_SESSION['file'] != "") {
 
 <body>
     <div class="container-fluid mt-2">
-        Files :
-        </br>
-        <?php
-        for ($i = 0; $i < count($_SESSION['file']); $i++) {
-            echo "<img class=\"m-2\" height=\"300\" width=\"300\" src=\"../uploads/" . $_SESSION['file'][$i]['nomFichierMedia'] . "\">";
-            $row++;
-            if($row == 3){
-                echo "</br>";
-                $row = 0;
-            }
-        }
-        ?>
-        </br>
         <form method="POST" action="" enctype="multipart/form-data">
-            <textarea name="text" rows="5" cols="55" style="resize: none;"><?php if ($com['commentaire'] != null) echo $com['commentaire'] ?></textarea>
+            <textarea name="text" rows="5" cols="55" style="resize: none;"><?php if ($com != null) echo $com ?></textarea>
             </br>
             Select a file :
             <input type="file" id="mediaFile" accept="image/*, video/*, audio/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">
