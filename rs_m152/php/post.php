@@ -8,14 +8,20 @@
 <?php
 require_once('functions.php');
 
+var_dump($_SESSION);
+
+// Boucle qui vérifie si la session n'est pas vide
 if ($_SESSION['file'] != "") {
     $btnValue = "Modify";
     $com = getComById($_SESSION['file'][0]['idPost']);
-    if($com == null){
+    $titre = "Sélectionner les médias à modifier : </br>";
+    // Boucle qui vérifie si le commentaire a bien été récupéré
+    if ($com == null) {
         $com = $_SESSION['file'];
     }
 } else {
     $btnValue = "Upload";
+    $titre = null;
 }
 ?>
 
@@ -33,7 +39,36 @@ if ($_SESSION['file'] != "") {
 <body>
     <div class="container-fluid mt-2">
         <form method="POST" action="" enctype="multipart/form-data">
-            <textarea name="text" rows="5" cols="55" style="resize: none;"><?php if ($com['commentaire'] != null) echo $com['commentaire'] ?></textarea>
+            <?php
+            // Boucle qui vérifie si il s'agit d'un commentaire
+            if ($_SESSION['idCom'] == null) {
+                echo $titre;
+                foreach ($_SESSION['file'] as $media) {
+                    $col += 1;
+                    $checkbox = "<input type=\"checkbox\" id=\"" . $media['nomFichierMedia'] . "\" name=\"mediaToChange\" value=\"" . $media['nomFichierMedia'] . "\">";
+                    // Switch qui determine le HTML des media par rapport a leur type
+                    switch ($media['typeMedia']) {
+                        case strpos($media["typeMedia"], 'image/'):
+                            $checkbox .= " <img class=\"p-1\" src=\"../uploads/" . $media['nomFichierMedia'] . "\" width=\"15%\" height=\"15%\">";
+                            break;
+                        case strpos($media["typeMedia"], 'video/'):
+                            $checkbox .= "<video width=\"15%\" height=\"15%\" autoplay loop muted><source src=\"../uploads/" . $media["nomFichierMedia"] . "\" type=\"" . $media["typeMedia"] . "\"></video>";
+                            break;
+                        case strpos($media["typeMedia"], 'audio/'):
+                            $checkbox .= " <audio class=\"p-1\" controls><source src=\"../uploads/" . $media['nomFichierMedia'] . "\" type=\"" . $media["typeMedia"] . "\"></audio>";
+                            break;
+                    }
+                    echo $checkbox;
+                    // Boucle qui alligne les medias
+                    if ($col == 3) {
+                        echo "</br>";
+                        $col = 0;
+                    }
+                }
+            }
+            ?>
+            </br>
+            <textarea name="text" class="mt-2 mb-2" rows="5" cols="55" style="resize: none;"><?php if ($com['commentaire'] != null) echo $com['commentaire'] ?></textarea>
             </br>
             Select a file :
             <input type="file" id="mediaFile" accept="image/*, video/*, audio/*" name="mediaFile[]" multiple onchange="analyseFichiers(this.files);">
