@@ -8,8 +8,6 @@
 <?php
 require_once('functions.php');
 
-var_dump($_SESSION);
-
 // Boucle qui vérifie si la session n'est pas vide
 if ($_SESSION['file'] != "") {
     $btnValue = "Modify";
