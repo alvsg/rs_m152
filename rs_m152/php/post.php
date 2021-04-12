@@ -43,7 +43,7 @@ if ($_SESSION['file'] != "") {
                 echo $titre;
                 foreach ($_SESSION['file'] as $media) {
                     $col += 1;
-                    $checkbox = "<input type=\"checkbox\" id=\"" . $media['nomFichierMedia'] . "\" name=\"mediaToChange\" value=\"" . $media['nomFichierMedia'] . "\">";
+                    $checkbox = "<input type=\"checkbox\" id=\"" . $media['nomFichierMedia'] . "\" name=\"mediaToChange[]\" value=\"" . $media['nomFichierMedia'] . "\">";
                     // Switch qui determine le HTML des media par rapport a leur type
                     switch ($media['typeMedia']) {
                         case strpos($media["typeMedia"], 'image/'):

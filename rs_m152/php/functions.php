@@ -41,14 +41,7 @@ switch ($btnBlog[0]) {
         break;
         // La modification d'un post depuis la page post
     case 'Modify':
-        // Boucle qui Vérifie si il y a des meidas
-        if ($_SESSION['file'][0]['idPost'] != null) {
-            // Boucle qui vérifie si il y a des medias a changer
-            if ($_POST['mediaToChange'] != null) {
-                $_SESSION['mediaToChange'] = getMediaByName($_POST['mediaToChange']);
-            }
-        }
-        modifyPost($_SESSION['file'], $_SESSION['mediaToChange']);
+        modifyPost($_SESSION['file'], $_POST['mediaToChange']);
         $_SESSION['file'] = null;
         $_SESSION['mediaToChange'] = null;
         $_SESSION['idCom'] = null;
@@ -242,10 +235,10 @@ function HtmlForMedia($thisMedia, $media)
 {
     switch ($thisMedia["typeMedia"]) {
         case strpos($thisMedia["typeMedia"], 'image/'):
-            $media .= " <img src=\"uploads/" . $thisMedia["nomFichierMedia"] . "\" width=\"399\" height=\"399\" class=\"img-responsive\">";
+            $media .= " <img src=\"uploads/" . $thisMedia["nomFichierMedia"] . "\" width=\"455\" height=\"455\" class=\"img-responsive\">";
             break;
         case strpos($thisMedia["typeMedia"], 'video/'):
-            $media .= "<video width=\"399\" height=\"399\" autoplay loop muted><source src=\"uploads/" . $thisMedia["nomFichierMedia"] . "\" type=\"" . $thisMedia["typeMedia"] . "\"></video>";
+            $media .= "<video width=\"455\" height=\"455\" autoplay loop muted><source src=\"uploads/" . $thisMedia["nomFichierMedia"] . "\" type=\"" . $thisMedia["typeMedia"] . "\"></video>";
             break;
         case strpos($thisMedia["typeMedia"], 'audio/'):
             $media .= "<audio controls><source src=\"uploads/" . $thisMedia["nomFichierMedia"] . "\" type=\"" . $thisMedia["typeMedia"] . "\"></audio>";
@@ -280,7 +273,7 @@ function publishPost()
         } else {
             $media = HtmlForMedia($aMedia[0], $media);
         }
-        $post = "<div class=\"panel panel-default fixed\">
+        $post = "<div class=\"panel panel-default\">
             <div class=\"panel-body\" style=\"padding : 0px\">
                 <form method=\"POST\" action=\"index.php\">
                     <button type=\"submit\" name=\"btnBlog\" class=\"btn\" style=\" float : right\" value=\"update/" . $post["idPost"] . "\"><i class=\"bi bi-pencil\"></i></button>
@@ -316,48 +309,76 @@ function deleteComInDB($com)
     $query->execute([':com' => $com]);
 }
 
+/// Fonction qui permet de récupérer l'identifiant du media par rapport à son nom
+function getIdMediabyMediaName($nom)
+{
+    $sql = "SELECT `idMedia` FROM `media` WHERE `nomFichierMedia` LIKE :nom";
+    $query = connectDB()->prepare($sql);
+    $query->execute([':nom' => $nom]);
+    return $query->fetchAll(PDO::FETCH_ASSOC);
+}
+
 /// Fonction qui permet de supprimer un post en fonction de son identifiant
 function deletePost($idPost)
 {
-    $nameFile = getMediaByIdPost($idPost);
-    foreach ($nameFile as $item) {
-        $n = $item["nomFichierMedia"];
-        unlink("uploads/$n");
+    connectDB()->beginTransaction();
+    try {
+        $nameFile = getMediaByIdPost($idPost);
+        foreach ($nameFile as $item) {
+            $name = $item["nomFichierMedia"];
+            if (unlink("uploads/$name") != true) {
+                echo '<div class="alert alert-warning" role="alert"> La supression du fichier dans le dossier a echoué ! </div>';
+            }
+        }
+        deleteFileInDB($idPost);
+        deleteComInDB($idPost);
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
     }
-    deleteFileInDB($idPost);
-    deleteComInDB($idPost);
 }
 
 /// Fonction qui permet de modifier les post en mettant à jour les informations dans la base de donnée
 function modifyPost($file, $mediaToChange)
 {
-    // Boucle qui vérifie si le post est un simple commentaire
-    if ($_SESSION['idCom'] == null) {
-        $DBcom = getComById($file[0]['idPost']);
-    } else {
-        $DBcom = getComById($_SESSION['idCom']);
-    }
-
-    //Boucle qui permet de vérifier si le commentaire de la base de donnée est identique a celui du formulaire de la page post
-    if (strcmp($_POST['text'], $DBcom['commentaire']) != 0 && $_POST['text'] != null) {
+    connectDB()->beginTransaction();
+    try {
         // Boucle qui vérifie si le post est un simple commentaire
         if ($_SESSION['idCom'] == null) {
-            updateComPost($file[0]['idPost'], $_POST['text']);
+            $DBcom = getComById($file[0]['idPost']);
         } else {
-            updateComPost($_SESSION['idCom'], $_POST['text']);
+            $DBcom = getComById($_SESSION['idCom']);
         }
-        // Boucle qui vérifie si le commentaire de la page post est vide
-    } else if ($_POST['text'] == "") {
-        echo '<div class="alert alert-danger" role="alert"> Le champs du commentaire est vide ! </div>';
-    }
 
-    foreach ($mediaToChange as $media) {
-        unlink("../uploads/" . $media['nomFichierMedia']);
-        deleteImgInDB($media['idMedia']);
-    }
+        // Boucle qui permet de vérifier si le commentaire de la base de donnée est identique a celui du formulaire de la page post
+        if (strcmp($_POST['text'], $DBcom['commentaire']) != 0 && $_POST['text'] != null) {
+            // Boucle qui vérifie si le post est un simple commentaire
+            if ($_SESSION['idCom'] == null) {
+                updateComPost($file[0]['idPost'], $_POST['text']);
+            } else {
+                updateComPost($_SESSION['idCom'], $_POST['text']);
+            }
+            // Boucle qui vérifie si le commentaire de la page post est vide
+        } else if ($_POST['text'] == "") {
+            echo '<div class="alert alert-danger" role="alert"> Le champs du commentaire est vide ! </div>';
+        }
 
-    if ($_FILES['mediaFile']['name'][0] != null) {
-        addMediaInDB($_POST['text']);
+        // Boucle qui vérifie si il y a des médias a supprimer
+        if ($mediaToChange != null) {
+            foreach ($mediaToChange as $media) {
+                if (unlink("../uploads/" . $media) == true) {
+                    $id = getIdMediabyMediaName($media);
+                    deleteImgInDB($id[0]['idMedia']);
+                }
+            }
+        }
+
+        if ($_FILES['mediaFile']['name'][0] != null) {
+            addMediaInDB($_POST['text']);
+        }
+        connectDB()->commit();
+    } catch (Exception $e) {
+        connectDB()->rollBack();
     }
 }
 
